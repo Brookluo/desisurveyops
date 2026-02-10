@@ -6,9 +6,9 @@ settings:
     field_ra: 130.5
     field_dec: 0.1
     tileid_start: 83589
-    rundate: "2026-02-09T22:00:00+00:00"
+    rundate: "2026-02-09T15:00:00+00:00"
     obsconds: "DARK"
-    sbprof: "PSF"
+    sbprof: "ELG"
     goaltime: 1000
     std_dtver: "1.1.1"
     np_rand_seed: 1234
