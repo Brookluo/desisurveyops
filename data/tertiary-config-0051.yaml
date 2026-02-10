@@ -1,0 +1,25 @@
+# overall settings
+settings:
+    prognum: 51
+    # targdir : "DESIROOT/survey/fiberassign/special/tertiary/0051"
+    targdir: "/pscratch/sd/b/brookluo/tertiary-design/steel/0051"
+    ntile: 9
+    field_ra: 130.5
+    field_dec: 0.1
+    tileid_start: 83589
+    rundate: "2026-02-09T22:00:00+00:00"
+    obsconds: "DARK"
+    sbprof: "PSF"
+    goaltime: 1000
+    std_dtver: "1.1.1"
+    np_rand_seed: 1234
+
+# per-sample settings
+samples:
+    STEEL:
+        {
+            "PRIORITY_INIT": 7000,
+            "NGOAL": 4,
+            "CHECKER": "NW",
+            "FN": "hsc_icmodelmag_22-24_fewcols_RA130d5_DEC000.fits.gz",
+        }
