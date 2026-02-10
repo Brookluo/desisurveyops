@@ -1,8 +1,7 @@
 # overall settings
 settings:
     prognum: 51
-    # targdir : "DESIROOT/survey/fiberassign/special/tertiary/0051"
-    targdir: "/pscratch/sd/b/brookluo/tertiary-design/steel/0051"
+    targdir : "DESIROOT/survey/fiberassign/special/tertiary/0051"
     ntile: 9
     field_ra: 130.5
     field_dec: 0.1
