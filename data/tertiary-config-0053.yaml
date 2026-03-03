@@ -1,0 +1,54 @@
+# overall settings
+settings:
+    prognum: 9410
+    # targdir : "DESIROOT/survey/fiberassign/special/tertiary/0051"
+    targdir: "/pscratch/sd/b/brookluo/tertiary-design/dwarf-galaxy"
+    ntile: 10
+    field_ra: 150.047
+    field_dec: 2.338
+    tileid_start: 99900
+    rundate: "2026-03-02T17:00:13+00:00"
+    obsconds: "DARK"
+    sbprof: "ELG"
+    goaltime: 600
+    std_dtver: "1.1.1"
+    np_rand_seed: 1234
+
+# per-sample settings
+# >9500 to be higher than main ToOs
+samples:
+    HIP:
+        {
+            "PRIORITY_INIT": 11500,
+            "NGOAL": 6,
+            "CHECKER": "VM",
+            "FN": "HIP-targets.fits",
+        }
+    LOWP:
+        {
+            "PRIORITY_INIT": 10500,
+            "NGOAL": 6,
+            "CHECKER": "VM",
+            "FN": "LOWP-targets.fits",
+        }
+    DWARF_FILLER:
+        {
+            "PRIORITY_INIT": 7000,
+            "NGOAL": 6,
+            "CHECKER": "VM",
+            "FN": "DWARF_FILLER-targets.fits",
+        }
+    XLG_FILLER:
+        {
+            "PRIORITY_INIT": 6000,
+            "NGOAL": 2,
+            "CHECKER": "CY",
+            "FN": "XLG_FILLER-targets.fits",
+        }
+    # TOO:
+    #     {
+    #         "PRIORITY_INIT": 7500,
+    #         "NGOAL": 1,
+    #         "CHECKER": "none",
+    #         "FN": "TOO-targets.fits",
+    #     }
