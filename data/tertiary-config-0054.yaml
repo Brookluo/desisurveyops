@@ -1,0 +1,39 @@
+# overall settings
+settings:
+    prognum: 54
+    targdir : "DESIROOT/survey/fiberassign/special/tertiary/0054"
+    ntile: 5
+    field_ra: 150.1 
+    field_dec: 2.382
+    tileid_start: 83616
+    rundate: "2026-03-04T17:00:00+00:00"
+    obsconds: "DARK"
+    sbprof: "ELG"
+    goaltime: 4000
+    std_dtver: "1.1.1"
+    np_rand_seed: 1234
+
+# per-sample settings
+# >9500 to be higher than main ToOs
+samples:
+    LAE:
+        {
+            "PRIORITY_INIT": 9000,
+            "NGOAL": 1,
+            "CHECKER": "RZ",
+            "FN": "tertiary54_lae_targets.fits",
+        }
+    LAE_FILLER:
+        {
+            "PRIORITY_INIT": 7000,
+            "NGOAL": 1,
+            "CHECKER": "RZ",
+            "FN": "tertiary54_lae_filler_targets.fits",
+        }
+    LBG:
+        {
+            "PRIORITY_INIT": 8000,
+            "NGOAL": 2,
+            "CHECKER": "RZ",
+            "FN": "LSST_Y4_CC_RF_COSMOS_lbg_targets_unique.fits",
+        }
