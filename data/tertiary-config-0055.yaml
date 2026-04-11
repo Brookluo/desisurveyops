@@ -1,0 +1,24 @@
+# overall settings
+settings:
+    prognum: 55
+    targdir : "DESIROOT/survey/fiberassign/special/tertiary/0055"
+    ntile: 8
+    field_ra: 150.1
+    field_dec: 2.2
+    tileid_start: 83621
+    rundate: "2026-04-08T17:00:00+00:00"
+    obsconds: "DARK"
+    sbprof: "ELG"
+    goaltime: 1000
+    std_dtver: "1.1.1"
+    np_rand_seed: 1234
+
+# per-sample settings
+samples:
+    STEEL:
+        {
+            "PRIORITY_INIT": 7000,
+            "NGOAL": 4,
+            "CHECKER": "NW",
+            "FN": "hsc_icmodelmag_22-24_COSMOS_fewcols_withexisting.fits.gz",
+        }
