@@ -38,7 +38,7 @@ class TertiaryTileDesign(TertiaryTileDesignBase):
             raise ValueError(
                 "0056 expects every sample to point at the same input catalog"
             )
-        fn = self.rootdir / fns.pop()
+        fn = self.rootdir / "inputcats" / fns.pop()
         logger.info("reading targets from %s", fn)
         targets = Table.read(fn)
         for col in targets.colnames:
