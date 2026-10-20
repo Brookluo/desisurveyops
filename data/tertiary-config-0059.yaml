@@ -1,0 +1,60 @@
+# overall settings
+settings:
+    prognum: 59
+    # targdir : "DESIROOT/survey/fiberassign/special/tertiary/0035"
+    targdir: "/pscratch/sd/b/brookluo/tertiary-design/m31/0059"
+    ntile: 10
+    field_ra: 10.6 # tiles have been defined, these are just placeholders
+    field_dec: 42.05
+    tileid_start: 99900
+    rundate: "2026-10-18T17:00:00+00:00"
+    obsconds: "DARK"
+    sbprof: "PSF"
+    goaltime: 1800
+    std_dtver: "2.2.0"
+    np_rand_seed: 1234
+
+# per-sample settings
+samples:
+    M31_BRIGHT:
+        {
+            "PRIORITY_INIT": 9000,
+            "NGOAL": 1,
+            "CHECKER": "NS",
+            "FN": "tertiary-targets-9999.fits",
+        }
+    M31_FILLER:
+        {
+            "PRIORITY_INIT": 1000,
+            "NGOAL": 1,
+            "CHECKER": "NS",
+            "FN": "tertiary-targets-9999.fits",
+        }
+    M31_GIANT:
+        {
+            "PRIORITY_INIT": 9000,
+            "NGOAL": 3,
+            "CHECKER": "NS",
+            "FN": "tertiary-targets-9999.fits",
+        }
+    M31_NIRAGB:
+        {
+            "PRIORITY_INIT": 9000,
+            "NGOAL": 8,
+            "CHECKER": "NS",
+            "FN": "tertiary-targets-9999.fits",
+        }
+    M31_QSO:
+        {
+            "PRIORITY_INIT": 5000,
+            "NGOAL": 1,
+            "CHECKER": "NS",
+            "FN": "tertiary-targets-9999.fits",
+        }
+    M31_SPECIAL:
+        {
+            "PRIORITY_INIT": 9000,
+            "NGOAL": 1,
+            "CHECKER": "NS",
+            "FN": "tertiary-targets-9999.fits",
+        }
