@@ -1,11 +1,11 @@
 # overall settings
 settings:
     prognum: 60
-    targdir: "/pscratch/sd/b/brookluo/tertiary-design/m31/0060"
+    targdir: "DESIROOT/survey/fiberassign/special/tertiary/0060"
     ntile: 8
     field_ra: 10.6 # tiles have been defined, these are just placeholders
-    field_dec: 42.05
-    tileid_start: 99900
+    field_dec: 42.0
+    tileid_start: 83646
     rundate: "2026-10-18T17:00:00+00:00"
     obsconds: "BRIGHT"
     sbprof: "PSF"
