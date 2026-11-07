@@ -85,6 +85,7 @@ def get_prognum_desc(prognum=None):
         58: {"TARGETS": "XLG", "FIELD": "RA,DEC=270.1, 66.0"},
         59: {"TARGETS": "M31 DARK", "FIELD": "M31"},
         60: {"TARGETS": "M31 BRIGHT", "FIELD": "M31"},
+        61: {"TARGETS": "XLG", "FIELD": "RA,DEC=270.1, 66.0"},
     }
     if prognum is None:
         return myd
