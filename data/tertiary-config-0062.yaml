@@ -1,0 +1,46 @@
+settings:
+    prognum: 62
+    targdir: /pscratch/sd/b/brookluo/tertiary-design/desi2-hiz # "DESIROOT/survey/fiberassign/special/tertiary/0062" # FILL; pscratch path is fine while designing
+    ntile: 3
+    field_ra: 35.75
+    field_dec: -4.75
+    tile_ra: [35.750, 35.726, 35.774]
+    tile_dec: [-4.722, -4.764, -4.764]
+    tileid_start: 99900 #83655
+    rundate: "2026-11-09T17:00:00+00:00"
+    obsconds: "DARK"
+    sbprof: "ELG"
+    goaltime: 1300
+    std_dtver: "1.1.1"
+    np_rand_seed: 1234
+
+
+samples:
+    high:
+        {
+            "PRIORITY_INIT": 9000,
+            "NGOAL": 1,
+            "CHECKER": "RZ",
+            "FN": "tertiaryX_xmm_lae_targets-combined.fits",
+        }
+    mid:
+        {
+            "PRIORITY_INIT": 7000,
+            "NGOAL": 1,
+            "CHECKER": "RZ",
+            "FN": "tertiaryX_xmm_lae_targets-combined.fits",
+        }
+    low:
+        {
+            "PRIORITY_INIT": 5000,
+            "NGOAL": 1,
+            "CHECKER": "RZ",
+            "FN": "tertiaryX_xmm_lae_targets-combined.fits",
+        }
+    very_low:
+        {
+            "PRIORITY_INIT": 3000,
+            "NGOAL": 1,
+            "CHECKER": "RZ",
+            "FN": "tertiaryX_xmm_lae_targets-combined.fits",
+        }
