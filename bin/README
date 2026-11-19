@@ -11,3 +11,21 @@ Scripts
 
 **updateefficiency** : Update table of observing efficiency data
 
+Tertiary webpage updates
+------------------------
+
+`tertiary-status-update.cronjob` runs `run-status-update.sh` at 17:30 and
+19:30 UTC. Each launch submits a CPU worker and one conditional retry for the
+programs listed in `tertiary-progress.txt`. Slurm serializes these updates.
+The launcher log (`bin/status-update-JOBID.out`) records both job IDs.
+
+The worker renders the HTML and requested QA products in a staging directory
+beside the live page. It checks the footer, installs the finished products,
+and replaces the page last. A subsequent attempt cleans up interrupted staging
+files. The worker reports success only after seeing a fresh, complete page.
+
+If the worker fails or times out, Slurm releases the retry. After a successful
+first attempt Slurm cancels the unused retry. If both attempts fail, the next
+scheduled update starts a new pair. Inspect `bin/status-worker-JOBID.out` and
+`sacct -j FIRST_ID,RETRY_ID --format=JobID,State,Elapsed,ExitCode,MaxRSS`.
+

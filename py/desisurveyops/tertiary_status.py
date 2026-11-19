@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 import os
-from glob import glob
+import shutil
+from functools import lru_cache
 import tempfile
-import multiprocessing
+from concurrent.futures import ProcessPoolExecutor
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table, vstack
@@ -115,17 +116,6 @@ def get_ref_prod():
 
 
 def get_prognum_latest_prod(prognum):
-
-    # AR tileids
-    fns = sorted(
-        glob(
-            os.path.join(
-                get_tertiary_folder(prognum), "08?", "fiberassign-??????.fits.gz"
-            )
-        )
-    )
-    tileids = [fits.getheader(fn, 0)["TILEID"] for fn in fns]
-
     # AR is this prognum in the latest prod?
     # AR if not go for daily
     ref_prod = get_ref_prod()
@@ -176,16 +166,23 @@ def get_black_expids():
     )
 
 
+@lru_cache(maxsize=4)
+def _read_redux_csv(filename, inode, mtime_ns, size):
+    # All program sections use the same few catalogs. Callers select rows
+    # into a new table before modifying columns for display.
+    return Table.read(filename)
+
+
+def _redux_catalog(prod, kind):
+    filename = os.path.join(os.environ["DESI_ROOT"], "spectro", "redux", prod,
+                            f"{kind}-{prod}.csv")
+    st = os.stat(filename)
+    return _read_redux_csv(filename, st.st_ino, st.st_mtime_ns, st.st_size)
+
+
 # AR removes efftime_spec=0 exposures..
 def read_exposures(prod, prognum=None):
-    fn = os.path.join(
-        os.getenv("DESI_ROOT"),
-        "spectro",
-        "redux",
-        prod,
-        "exposures-{}.csv".format(prod),
-    )
-    d = Table.read(fn)
+    d = _redux_catalog(prod, "exposures")
     sel = d["EFFTIME_SPEC"] > 0
     sel &= ~np.in1d(d["EXPID"], get_black_expids())
 
@@ -410,6 +407,15 @@ def make_speed_plot(prognum, prod, outpng):
     plt.close()
 
 
+def _qa_results(func, args, numproc):
+    """Keep at most one batch of spectra in memory and propagate worker deaths."""
+    with ProcessPoolExecutor(max_workers=numproc) as pool:
+        for start in range(0, len(args), numproc):
+            batch = [pool.submit(func, *a) for a in args[start:start + numproc]]
+            for future in batch:
+                yield future.result()
+
+
 # AR https://github.com/desihub/desispec/blob/eb9f86e93c81c11792363121408231bc45b370c7/py/desispec/night_qa.py#L878-L954
 # AR copying that function, but need a minor re-writing because of the night argument...
 def make_sframesky_pdf(prognum, prod, outpdf, numproc):
@@ -426,14 +432,10 @@ def make_sframesky_pdf(prognum, prod, outpdf, numproc):
                 expid,
             ]
         )
-    # AR launching pool
-    pool = multiprocessing.Pool(processes=numproc)
-    with pool:
-        mydicts = pool.starmap(_read_sframesky, myargs)
     # AR creating pdf (+ removing temporary files)
     cmap = matplotlib.cm.Greys_r
     with PdfPages(outpdf) as pdf:
-        for mydict in mydicts:
+        for mydict in _qa_results(_read_sframesky, myargs, numproc):
             if mydict is not None:
                 fig = plt.figure(figsize=(20, 10))
                 gs = gridspec.GridSpec(len(cameras), 1, hspace=0.025)
@@ -532,44 +534,39 @@ def make_tileqa_pdf(prognum, prod, outpdf, numproc):
     tileids, ii = np.unique(d["TILEID"], return_index=True)
     lastnights = np.array([d["NIGHT"][d["TILEID"] == tileid][-1] for tileid in tileids])
 
-    tmpoutdir = tempfile.mkdtemp()
-    myargs = []
-    outpngs = []
-    for tileid, lastnight in zip(tileids, lastnights):
-        in_tileqafits = os.path.join(
-            specprod_dir,
-            "tiles",
-            "cumulative",
-            str(tileid),
-            str(lastnight),
-            "tile-qa-{}-thru{}.fits".format(tileid, lastnight),
-        )
-        if not os.path.isfile(in_tileqafits):
-            print("WARNING : missing {} => skipping it".format(in_tileqafits))
-            continue
-        outpng = os.path.join(
-            tmpoutdir, "tile-qa-{}-thru{}.png".format(tileid, lastnight)
-        )
-        tileqafits = outpng.replace(".png", ".fits")
-        os.system("cp {} {}".format(in_tileqafits, tileqafits))
-        outpngs.append(outpng)
-        myargs.append([tileqafits, specprod_dir])
-    # AR launching pool
-    pool = multiprocessing.Pool(processes=numproc)
-    with pool:
-        mydicts = pool.starmap(make_tile_qa_plot, myargs)
-    # AR remove the copied tileqafits
-    for myarg in myargs:
-        os.remove(myarg[0])
-    # AR per-night pdf tileqa
-    with PdfPages(outpdf) as pdf:
-        for outpng in outpngs:
-            fig, ax = plt.subplots()
-            img = Image.open(outpng)
-            ax.imshow(img, origin="upper")
-            ax.axis("off")
-            pdf.savefig(fig, bbox_inches="tight", dpi=300)
-            plt.close()
+    with tempfile.TemporaryDirectory() as tmpoutdir:
+        myargs = []
+        outpngs = []
+        for tileid, lastnight in zip(tileids, lastnights):
+            in_tileqafits = os.path.join(
+                specprod_dir,
+                "tiles",
+                "cumulative",
+                str(tileid),
+                str(lastnight),
+                "tile-qa-{}-thru{}.fits".format(tileid, lastnight),
+            )
+            if not os.path.isfile(in_tileqafits):
+                print("WARNING : missing {} => skipping it".format(in_tileqafits))
+                continue
+            outpng = os.path.join(
+                tmpoutdir, "tile-qa-{}-thru{}.png".format(tileid, lastnight)
+            )
+            tileqafits = outpng.replace(".png", ".fits")
+            shutil.copyfile(in_tileqafits, tileqafits)
+            outpngs.append(outpng)
+            myargs.append([tileqafits, specprod_dir])
+        for _ in _qa_results(make_tile_qa_plot, myargs, numproc):
+            pass  # make_tile_qa_plot writes each PNG in the worker.
+        # AR per-night pdf tileqa
+        with PdfPages(outpdf) as pdf:
+            for outpng in outpngs:
+                fig, ax = plt.subplots()
+                img = Image.open(outpng)
+                ax.imshow(img, origin="upper")
+                ax.axis("off")
+                pdf.savefig(fig, bbox_inches="tight", dpi=300)
+                plt.close()
 
 
 def write_html_plot(html, outdir, outpng, width):
@@ -655,10 +652,7 @@ def write_html_exptable(html, prognum, prod):
 
 
 def get_efftime_min(prognum, prod):
-    fn = os.path.join(
-        os.getenv("DESI_ROOT"), "spectro", "redux", prod, "tiles-{}.csv".format(prod)
-    )
-    d = Table.read(fn)
+    d = _redux_catalog(prod, "tiles")
     d = d[d["FAPRGRM"] == "tertiary{}".format(prognum)]
     assert np.unique(d["GOALTIME"] * d["MINTFRAC"]).size == 1
     efftime_min = (d["GOALTIME"] * d["MINTFRAC"])[0]
@@ -841,5 +835,5 @@ def write_html_close(html):
 
     # ADM html postamble for main page.
     write_html_today(html)
-    html.write("</html></body>\n")
+    html.write("</body></html>\n")
     html.close()

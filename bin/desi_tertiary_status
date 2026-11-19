@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 
+import fcntl
 import os
-import numpy as np
+import shutil
+from contextlib import contextmanager
+from pathlib import Path
 from desisurveyops.tertiary_status import (
     get_prognum_desc,
     write_html_init,
@@ -49,6 +52,28 @@ def parse():
     return args
 
 
+@contextmanager
+def staging_directory(outdir):
+    # A killed process releases its lock. The next writer can reclaim its
+    # interrupted PDFs before starting, even after a Slurm timeout or SIGKILL.
+    with (Path(outdir) / ".tertiary-status.lock").open("a") as lock:
+        fcntl.lockf(lock, fcntl.LOCK_EX)
+        stage = Path(outdir) / ".tertiary-status-stage"
+        if stage.exists():
+            shutil.rmtree(stage)
+        stage.mkdir(mode=0o700)
+        try:
+            yield stage
+        finally:
+            shutil.rmtree(stage)
+
+
+def publish(source, destination):
+    if destination.exists():
+        source.chmod(destination.stat().st_mode & 0o777)
+    source.replace(destination)
+
+
 def main():
 
     args = parse()
@@ -60,27 +85,41 @@ def main():
     log.info("all_prognums = {}".format(all_prognums))
 
     if args.prognums is not None:
-        torun_prognums = [
-            _
-            for _ in all_prognums
-            if _ in [int(prognum) for prognum in args.prognums.split(",")]
-        ]
+        requested = {int(prognum) for prognum in args.prognums.split(",")}
+        unknown = requested.difference(all_prognums)
+        if unknown:
+            raise ValueError(f"Unregistered tertiary program(s): {sorted(unknown)}")
+        torun_prognums = [prognum for prognum in all_prognums if prognum in requested]
     else:
         torun_prognums = all_prognums
     log.info("torun_prognums = {}".format(torun_prognums))
 
-    html = open(outhtml, "w")
+    # Stage on the destination filesystem so each rename is atomic. Keep the
+    # published page and its PDFs readable even if a QA worker dies mid-plot.
+    with staging_directory(args.outdir) as stage:
+        products = ("sky", "speed", "sframesky", "tileqa")
+        for product in products:
+            (stage / product).mkdir()
+        page = stage / "tertiary-status.html"
+        with page.open("w") as html:
+            write_html_init(html, outcss)
+            write_html_overview(html, all_prognums)
+            for i, prognum in enumerate(all_prognums):
+                html_only = args.html_only or prognum not in torun_prognums
+                write_html_prognum(html, prognum, str(stage), i % 2 == 0, args.numproc, html_only)
+            write_html_close(html)
 
-    write_html_init(html, outcss)
-
-    write_html_overview(html, all_prognums)
-
-    for i, prognum in enumerate(all_prognums):
-        is_odd = i % 2 == 0
-        html_only = (args.html_only) | (prognum not in torun_prognums)
-        write_html_prognum(html, prognum, args.outdir, is_odd, args.numproc, html_only)
-
-    write_html_close(html)
+        with page.open("rb") as html:
+            footer = b"</body></html>\n"
+            html.seek(-len(footer), os.SEEK_END)
+            if html.read() != footer:
+                raise RuntimeError("Incomplete tertiary status page")
+        for product in products:
+            for asset in (stage / product).iterdir():
+                destination = Path(args.outdir) / product
+                destination.mkdir(exist_ok=True)
+                publish(asset, destination / asset.name)
+        publish(page, Path(outhtml))
 
 
 if __name__ == "__main__":
